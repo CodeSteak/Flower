@@ -108,12 +108,14 @@ defmodule Flower.Bloom do
   Create a new Bloom Filter with maximum byte size 'bytes'. The size gets
   rounded down to the next `size_atom()`.
   """
-  @spec new_by_byte_size(bytes :: size_atom(), expected_elements :: pos_integer()) :: bloomfilter()
+  @spec new_by_byte_size(bytes :: size_atom(), expected_elements :: pos_integer()) ::
+          bloomfilter()
   def new_by_byte_size(bytes, expected_elements) when bytes in @byte_sizes do
     new(bytes, expected_elements)
   end
 
-  @spec new_by_byte_size(bytes :: pos_integer(), expected_elements :: pos_integer()) :: bloomfilter()
+  @spec new_by_byte_size(bytes :: pos_integer(), expected_elements :: pos_integer()) ::
+          bloomfilter()
   def new_by_byte_size(bytes, expected_elements) do
     bitaddrlen = trunc(:math.log2(bytes * 8))
 

@@ -4,6 +4,7 @@ defmodule Flower.MixProject do
   def project do
     [
       app: :flower,
+      name: "flower",
       version: "0.1.1",
       elixir: "~> 1.6",
       build_embedded: Mix.env() == :prod,
@@ -22,20 +23,19 @@ defmodule Flower.MixProject do
   end
 
   defp package() do
-      [
-          name: "Flower",
-          maintainers: ["Codesteak"],
-          licenses: ["MIT"],
-          links: %{
-            "Source" => "https://github.com/CodeSteak/Flower",
-          },
-      ]
+    [
+      maintainers: ["Codesteak"],
+      licenses: ["MIT"],
+      links: %{
+        "Source" => "https://github.com/CodeSteak/Flower"
+      }
+    ]
   end
 
   def description() do
-      """
-      This is an implementation of Bloom Filters for Elixir. It uses Rust NIFs for better performance.
-      """
+    """
+    This is an implementation of Bloom Filters for Elixir. It uses Rust NIFs for better performance.
+    """
   end
 
   # Run "mix help compile.app" to learn about applications.
