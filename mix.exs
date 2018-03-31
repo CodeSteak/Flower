@@ -28,7 +28,14 @@ defmodule Flower.MixProject do
       licenses: ["MIT"],
       links: %{
         "Source" => "https://github.com/CodeSteak/Flower"
-      }
+      },
+      files: [
+        "mix.exs",
+        "native",
+        "lib",
+        "LICENSE",
+        "README.md"
+      ]
     ]
   end
 
