@@ -27,7 +27,7 @@ defmodule Flower.MixProject do
       maintainers: ["Codesteak"],
       licenses: ["MIT"],
       links: %{
-        "Source" => "https://github.com/CodeSteak/Flower"
+        "Github" => "https://github.com/CodeSteak/Flower"
       },
       files: [
         "mix.exs",
