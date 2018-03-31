@@ -17,7 +17,7 @@ The package can be installed by adding `flower` to your list of dependencies in 
 ```elixir
 def deps do
   [
-    {:flower, "~> 0.1.1"},
+    {:flower, "~> 0.1.2"},
   ]
 end
 ```
