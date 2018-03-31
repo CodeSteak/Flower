@@ -1,6 +1,6 @@
 # Flower
 
-This is an implemtation of __Bloom Filters for Elixir__. It uses __NIF__s written __in Rust__ for better performance, since Bloomfilters rely highly on mutability.
+This is an implementation of __Bloom Filters for Elixir__. It uses __NIFs__ written __in Rust__ for better performance, since Bloom Filters rely highly on mutability.
 
 #### What are Bloom Filter?
 __TL;DR__: *Huge amount of data __➜__ small Bloom Filter __:__ Was X not in Huge amount of data?*
@@ -11,25 +11,21 @@ For more about this topic consider checking out:
 
 ## Installation
 
-~~The package can be installed by adding `flower` to your list of dependencies in `mix.exs`:~~
-
-* Todo: https://hex.pm/docs/publish
-* Todo: https://hexdocs.pm/flower
+The package can be installed by adding `flower` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    # ~~{:flower, "~> 0.1.0"}~~
-    {:flower, github: "codesteak/flower", tag: "0.1.0"}
+    {:flower, "~> 0.1.1"},
   ]
 end
 ```
 
 Also, you need to have __Rust__ installed, since this uses NIFs.
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc).
+Docs can be found at [https://hexdocs.pm/flower](https://hexdocs.pm/flower).
 
-~~Docs can be found at [https://hexdocs.pm/flower](https://hexdocs.pm/flower).~~
+Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc).
 
 ## Usage
 There is also a small walk through in the [Example Section](#example)
