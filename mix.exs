@@ -10,14 +10,32 @@ defmodule Flower.MixProject do
       start_permanent: Mix.env() == :prod,
       compilers: [:rustler] ++ Mix.compilers(),
       rustler_crates: rustler_crates(),
+      package: package(),
+      description: description(),
       deps: deps(),
-      name: "Flower",
       source_url: "https://github.com/CodeSteak/Flower",
       docs: [
         main: "README.md",
         extras: ["README.md"]
       ]
     ]
+  end
+
+  defp package() do
+      [
+          name: "Flower",
+          maintainers: ["Codesteak"],
+          licenses: ["MIT"],
+          links: %{
+            "Source" => "https://github.com/CodeSteak/Flower",
+          },
+      ]
+  end
+
+  def description() do
+      """
+      This is an implementation of Bloom Filters for Elixir. It uses Rust NIFs for better performance.
+      """
   end
 
   # Run "mix help compile.app" to learn about applications.
