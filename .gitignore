@@ -25,3 +25,4 @@ flower-*.tar
 # Rust Stuff
 /native/bitarray/Cargo.lock
 /native/bitarray/target/
+/priv/
