@@ -1,0 +1,5 @@
+language: elixir
+
+sudo: true
+before_install:
+    - curl https://static.rust-lang.org/rustup.sh | sh
