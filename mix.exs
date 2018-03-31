@@ -15,7 +15,7 @@ defmodule Flower.MixProject do
       deps: deps(),
       source_url: "https://github.com/CodeSteak/Flower",
       docs: [
-        main: "README.md",
+        main: "readme",
         extras: ["README.md"]
       ]
     ]
