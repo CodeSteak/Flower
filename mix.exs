@@ -5,7 +5,7 @@ defmodule Flower.MixProject do
     [
       app: :flower,
       name: "flower",
-      version: "0.1.1",
+      version: "0.1.2",
       elixir: "~> 1.6",
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
