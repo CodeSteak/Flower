@@ -2,12 +2,14 @@
 //#[macro_use] extern crate rustler_codegen;
 #[macro_use] extern crate lazy_static;
 
+use std::sync::Mutex;
+
 use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
 use rustler::resource::ResourceArc;
-use std::sync::Mutex;
-use rustler::types::NifBinary;
-use rustler::types::OwnedNifBinary;
+use rustler::types::{NifBinary, OwnedNifBinary};
 use rustler::schedule::NifScheduleFlags;
+
+
 mod atoms {
     rustler_atoms! {
         atom ok;
@@ -35,16 +37,17 @@ rustler_export_nifs! {
 
 fn on_load<'a>(env: NifEnv<'a>, _info: NifTerm<'a>) -> bool {
     resource_struct_init!(BitArray, env);
+
     true
 }
 
 fn new<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let length: usize = try!(args[0].decode());
 
-    let array: Box<[u64]> = vec![0; (length-1) / 64 + 1].into_boxed_slice();
+    let data: Box<[u64]> = vec![0; (length-1) / 64 + 1].into_boxed_slice();
 
     let resource : ResourceArc<BitArray> = ResourceArc::new(BitArray{
-        data: Mutex::new(array)
+        data: Mutex::new(data)
     });
 
     Ok(resource.encode(env))
@@ -54,10 +57,10 @@ fn from_bin<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>>
     let bin: NifBinary = try!(args[0].decode());
     let bin64len = (bin.len()-1) / 8 + 1;
 
-    let mut array: Box<[u64]> = vec![0; bin64len].into_boxed_slice();
+    let mut data: Box<[u64]> = vec![0; bin64len].into_boxed_slice();
 
-    for x in 0..array.len() {
-        array[x] = 0
+    for x in 0..data.len() {
+        data[x] = 0
             | ((bin[x*8 + 0] as u64) << 0*8)
             | ((bin[x*8 + 1] as u64) << 1*8)
             | ((bin[x*8 + 2] as u64) << 2*8)
@@ -69,7 +72,7 @@ fn from_bin<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>>
     }
 
     let resource : ResourceArc<BitArray> = ResourceArc::new( BitArray{
-        data: Mutex::new(array)
+        data: Mutex::new(data)
     });
 
     Ok(resource.encode(env))
@@ -77,15 +80,15 @@ fn from_bin<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>>
 
 fn to_bin<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
-    let array = resource.data.try_lock().unwrap();
+    let data = resource.data.try_lock().unwrap();
 
-    let mut erl_bin : OwnedNifBinary = OwnedNifBinary::new(array.len() * 8).unwrap();
+    let mut erl_bin : OwnedNifBinary = OwnedNifBinary::new(data.len() * 8).unwrap();
     let bin = erl_bin.as_mut_slice();
 
-    for x in 0usize..array.len() {
+    for x in 0usize..data.len() {
         for y in 0..8 {
             let i = x*8 + y;
-            bin[i] = (array[x] >> (y*8)) as u8;
+            bin[i] = (data[x] >> (y*8)) as u8;
         }
     }
 
@@ -116,26 +119,26 @@ fn get<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
     let index: usize = try!(args[1].decode());
 
-    let vec = resource.data.try_lock().unwrap();
+    let data = resource.data.try_lock().unwrap();
 
-    let result = (vec[index / 64] & (1 << (index % 64))) != 0;
+    let result = (data[index / 64] & (1 << (index % 64))) != 0;
 
     Ok(result.encode(env))
 }
 
 fn bit_length<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
-    let vec = resource.data.try_lock().unwrap();
+    let data = resource.data.try_lock().unwrap();
 
-    Ok((vec.len() * 64).encode(env))
+    Ok((data.len() * 64).encode(env))
 }
 
 fn count_ones<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
-    let vec = resource.data.try_lock().unwrap();
+    let data = resource.data.try_lock().unwrap();
 
     let mut count = 0usize;
-    for x in vec.iter() {
+    for x in data.iter() {
         count += x.count_ones() as usize;
     }
 
