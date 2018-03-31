@@ -6,7 +6,7 @@ This is an implementation of __Bloom Filters for Elixir__. It uses __NIFs__ writ
 #### What are Bloom Filter?
 __TL;DR__: *Huge amount of data __➜__ small Bloom Filter __:__ Was X not in Huge amount of data?*
 
-For more about this topic consider checking out:
+For more about this topic consider, checking out:
 * [Bloom Filters by Jason Davis](https://www.jasondavies.com/bloomfilter/)
 * [Bloom Filters, Mining of Massive Datasets, Stanford University on Youtube](https://www.youtube.com/watch?v=qBTdukbzc78)
 
@@ -36,7 +36,7 @@ alias Flower.Bloom, as: Bloom
 ##### Create new Bloom Filter
 ```elixir
 expected_number_of_unique_elements = 1000
-# With an size atom
+# With a size atom
 iex> filter = Bloom.new(:"8 KB", expected_number_of_unique_elements)
 ...
 # Or by a maximum byte size:
@@ -77,7 +77,7 @@ iex> Bloom.has_maybe?(filter, [1,2,{:atom, <<1,2,3,4>>}])
 true
 iex> Bloom.has_maybe?(filter, :atom)
 false
-# `has_maybe?` is allways the opposite of `has_not?`.
+# `has_maybe?` is always the opposite of `has_not?`.
 iex> Bloom.has_maybe?(filter, 42) != Bloom.has_not?(filter, 42)
 true
 ```
@@ -107,21 +107,21 @@ end && :ok
 alias Flower.Bloom, as: Bloom
 
 
-# Select apropriate size.
+# Select appropriate size.
 # We will put about 100_000 elements in.
 # 64 KB = 512 KBit
 # 512 KBit / 100_000 ~= 5.25 Bits per element.
-# Meeh. Lets see...
+# Meeh. Let's see...
 non_primes = Bloom.new(:"64 KB", 100_000)
 # We can also write
 non_primes = Bloom.new(19, 100_000)
 # or (it will choose the next smaller size)
 non_primes = Bloom.new_by_byte_size(64 * 1024, 100_000)
 
-# Lets inspect the size.
+# Let's inspect the size.
 byte_size(Bloom.serialize(non_primes))
 
-# lets two non primes in:
+# Let's put some non primes in:
 Bloom.insert(non_primes, 42)
 Bloom.insert(non_primes, "one hundred")
 Bloom.insert(non_primes, [:ok, {Anything, 1.0e9}])
@@ -141,15 +141,15 @@ Bloom.has_maybe?(non_primes, 52)
 Bloom.estimate_count(non_primes)
 
 
-# Apply Sieve of Eratosthenes
+# Apply Sieve of Eratosthenes.
 # This may take a few seconds.
 # At least we can do it with
 # constant memory.
 for x <- 2..50_000 do
   # Skip multiples of previous numbers.
-  # this is actually not safe to do
+  # This is actually not safe to do
   # with a bloom filter since they are
-  # aproximations. But let's don't care for now.
+  # approximations. But let's don't care for now.
   if(Bloom.has_not?(non_primes, x)) do
     Step.throught(x*2, 100_000, x, fn non_prime ->
         # Much of the time is used to calculate
@@ -174,14 +174,14 @@ Bloom.false_positive_probability(non_primes)
 
 # Let's reestimate .
 # There are 9_592 primes below 100_000, so this
-# should yield about 100_000 - 9_592 = 90_408
+# should yield about 100_000 - 9_592 = 90_408.
 Bloom.estimate_count(non_primes)
 ```
 Side note: If you want to check primes, ~~google~~
 search for *Miller–Rabin primality test*.
 
 ### Note
-Please try avoiding calling the following functions often:
+Please try to avoid calling the following functions often:
 * `Bloom.false_positive_probability`
 * `Bloom.estimate_count`
 * `Bloom.serialize`
