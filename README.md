@@ -17,7 +17,7 @@ The package can be installed by adding `flower` to your list of dependencies in 
 ```elixir
 def deps do
   [
-    {:flower, "~> 0.1.2"},
+    {:flower, "~> 0.1.3"},
   ]
 end
 ```
@@ -81,6 +81,12 @@ false
 iex> Bloom.has?(filter, 42) != Bloom.has_not?(filter, 42)
 true
 ```
+
+|Was actually inserted?| has? | has_not? |
+|:--------------------:|:----:|:--------:|
+| yes                  | yes  |   no     |
+| no                   | most of the times no  |   most of the times yes     |
+
 
 ##### Funky Stuff
 ```elixir

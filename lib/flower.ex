@@ -178,8 +178,19 @@ defmodule Flower.Bloom do
   end
 
   @doc """
-  Checks if an element could be in the given Bloom Filter. Return `true` if so,
-  else `false`.
+  Checks if an element was inserted in the given Bloom Filter.
+
+  Returns `false` if it can be guaranteed that the element was not
+  inserted. Else `true`.
+
+  You can get the probability of a false positive
+  using `Flower.Bloom.false_positive_probability`.
+
+  |Was actually inserted?|                  has?  |                    has_not?  |
+  |:--------------------:|:----------------------:|:----------------------------:|
+  | yes                  | yes                    |                       no     |
+  | no                   | most of the times: no  |   most of the times: yes     |
+
   """
   @spec has?(bloomfilter(), any()) :: boolean()
   def has?({:bloom, bitarray, mask, hashes}, bin) when is_binary(bin) do
@@ -195,10 +206,12 @@ defmodule Flower.Bloom do
   end
 
   @doc """
-  Checks if an element is not in a given Bloom Filter. Return `true` if so,
-  else `false`.
+  Checks if an element is not in a given Bloom Filter.
 
-  This is equal to `!Bloom.has_maybe(filter, term)`
+  Returns `true` if it can be guaranteed that the element was not
+  inserted. Else `false`.
+
+  This is equal to `!Bloom.has?(filter, term)`
   """
   @spec has_not?(bloomfilter(), any()) :: boolean()
   def has_not?(bloom, term), do: !has?(bloom, term)
