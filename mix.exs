@@ -31,7 +31,9 @@ defmodule Flower.MixProject do
       },
       files: [
         "mix.exs",
-        "native",
+        "native/bitarray/src",
+        "native/bitarray/Cargo.toml",
+        "native/bitarray/TODO.md",
         "lib",
         "LICENSE",
         "README.md"
