@@ -181,8 +181,8 @@ defmodule Flower.Bloom do
   Checks if an element could be in the given Bloom Filter. Return `true` if so,
   else `false`.
   """
-  @spec has_maybe?(bloomfilter(), any()) :: boolean()
-  def has_maybe?({:bloom, bitarray, mask, hashes}, bin) when is_binary(bin) do
+  @spec has?(bloomfilter(), any()) :: boolean()
+  def has?({:bloom, bitarray, mask, hashes}, bin) when is_binary(bin) do
     sha256 = :crypto.hash(:sha256, bin)
 
     hash_to_list(hashes, sha256)
@@ -190,8 +190,8 @@ defmodule Flower.Bloom do
     |> read(bitarray)
   end
 
-  def has_maybe?(bloom, term) do
-    has_maybe?(bloom, :erlang.term_to_binary(term))
+  def has?(bloom, term) do
+    has?(bloom, :erlang.term_to_binary(term))
   end
 
   @doc """
@@ -201,7 +201,7 @@ defmodule Flower.Bloom do
   This is equal to `!Bloom.has_maybe(filter, term)`
   """
   @spec has_not?(bloomfilter(), any()) :: boolean()
-  def has_not?(bloom, term), do: !has_maybe?(bloom, term)
+  def has_not?(bloom, term), do: !has?(bloom, term)
 
   @doc false
   @deprecated "This is unstable, can change soon"
@@ -266,4 +266,8 @@ defmodule Flower.Bloom do
 
   defp hash_to_list(8, <<a::32, b::32, c::32, d::32, e::32, f::32, g::32, h::32>>),
     do: [a, b, c, d, e, f, g, h]
+
+  @doc false
+  @deprecated "Use `has?` instead"
+  def has_maybe?(a, b), do: has?(a, b)
 end

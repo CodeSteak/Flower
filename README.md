@@ -73,12 +73,12 @@ iex> Bloom.insert(filter, "Hello!")
 ```elixir
 iex> Bloom.has_not?(filter, "Hello!")
 false
-iex> Bloom.has_maybe?(filter, [1,2,{:atom, <<1,2,3,4>>}])
+iex> Bloom.has?(filter, [1,2,{:atom, <<1,2,3,4>>}])
 true
-iex> Bloom.has_maybe?(filter, :atom)
+iex> Bloom.has?(filter, :atom)
 false
-# `has_maybe?` is always the opposite of `has_not?`.
-iex> Bloom.has_maybe?(filter, 42) != Bloom.has_not?(filter, 42)
+# `has?` is always the opposite of `has_not?`.
+iex> Bloom.has?(filter, 42) != Bloom.has_not?(filter, 42)
 true
 ```
 
@@ -127,11 +127,11 @@ Bloom.insert(non_primes, "one hundred")
 Bloom.insert(non_primes, [:ok, {Anything, 1.0e9}])
 
 # Let's double check:
-Bloom.has_maybe?(non_primes, 42)
-Bloom.has_maybe?(non_primes, "one hundred")
-Bloom.has_maybe?(non_primes, 7)
-Bloom.has_maybe?(non_primes, [:ok, {Anything, 1.0e9}])
-Bloom.has_maybe?(non_primes, 52)
+Bloom.has?(non_primes, 42)
+Bloom.has?(non_primes, "one hundred")
+Bloom.has?(non_primes, 7)
+Bloom.has?(non_primes, [:ok, {Anything, 1.0e9}])
+Bloom.has?(non_primes, 52)
 # Works!
 
 
