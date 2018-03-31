@@ -1,5 +1,7 @@
 # Flower
 
+[![Build Status](https://travis-ci.org/CodeSteak/Flower.svg?branch=master)
+
 This is an implementation of __Bloom Filters for Elixir__. It uses __NIFs__ written __in Rust__ for better performance, since Bloom Filters rely highly on mutability.
 
 #### What are Bloom Filter?
