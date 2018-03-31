@@ -21,7 +21,7 @@ def deps do
 end
 ```
 
-Also, you need to have __Rust__ installed, since this uses NIFs.
+Also, you need to have __Rust__ installed for development, since this uses NIFs.
 
 Docs can be found at [https://hexdocs.pm/flower](https://hexdocs.pm/flower).
 
@@ -29,7 +29,7 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 
 ## Usage
 There is also a small walk through in the [Example Section](#example)
-```
+```elixir
 alias Flower.Bloom, as: Bloom
 ```
 ##### Create new Bloom Filter
