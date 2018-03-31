@@ -143,7 +143,7 @@ defmodule Flower.Bloom do
   end
 
   @doc """
-  Estimates how many uniq elements have been added.
+  Estimates how many unique elements have been added.
   This Operation is slow for large Bloom Filters and should then be avoided.
   """
   @spec estimate_count(bloomfilter()) :: non_neg_integer()
