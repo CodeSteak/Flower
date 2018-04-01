@@ -89,13 +89,13 @@ defmodule Flower.Bloom do
   """
   @spec new(bitaddrlen :: 6..32, expected_elements :: pos_integer()) :: bloomfilter()
   def new(bitaddrlen, expected_elements) when bitaddrlen in 6..32 do
-    hashes = 1..8 |> Enum.min_by(&calc_fp_prob(expected_elements, 1 <<< bitaddrlen, &1))
+    number_of_hashes = 1..8 |> Enum.min_by(&calc_fp_prob(expected_elements, 1 <<< bitaddrlen, &1))
 
-    if hashes == 1 do
+    if number_of_hashes == 1 do
       IO.warn("Your Bloom filter is too small for the expected number of elements!")
     end
 
-    {:bloom, BitArray.new(1 <<< bitaddrlen), (1 <<< bitaddrlen) - 1, hashes}
+    {:bloom, BitArray.new(1 <<< bitaddrlen), (1 <<< bitaddrlen) - 1, number_of_hashes}
   end
 
   @spec new(bitaddrlen :: size_atom(), expected_elements :: pos_integer()) :: bloomfilter()
@@ -122,12 +122,12 @@ defmodule Flower.Bloom do
     new(bitaddrlen, expected_elements)
   end
 
-  defp calc_fp_prob(elem, size, hashes) do
+  defp calc_fp_prob(elem, size, number_of_hashes) do
     e = 2.71828182846
-    fraction_of_0 = :math.pow(e, -hashes * elem / size)
+    fraction_of_0 = :math.pow(e, -number_of_hashes * elem / size)
     fraction_of_1 = 1 - fraction_of_0
 
-    false_positives = :math.pow(fraction_of_1, hashes)
+    false_positives = :math.pow(fraction_of_1, number_of_hashes)
     false_positives
   end
 
@@ -137,9 +137,9 @@ defmodule Flower.Bloom do
   This Operation is slow for large Bloom Filters and should then be avoided.
   """
   @spec false_positive_probability(bloomfilter()) :: float()
-  def false_positive_probability({:bloom, bitarray, _mask, hashes}) do
+  def false_positive_probability({:bloom, bitarray, _mask, number_of_hashes}) do
     fraction_of_1 = BitArray.count_ones(bitarray) / BitArray.bit_length(bitarray)
-    false_positives = :math.pow(fraction_of_1, hashes)
+    false_positives = :math.pow(fraction_of_1, number_of_hashes)
 
     false_positives
   end
@@ -149,14 +149,14 @@ defmodule Flower.Bloom do
   This Operation is slow for large Bloom Filters and should then be avoided.
   """
   @spec estimate_count(bloomfilter()) :: non_neg_integer()
-  def estimate_count({:bloom, bitarray, _mask, hashes}) do
+  def estimate_count({:bloom, bitarray, _mask, number_of_hashes}) do
     bits = BitArray.bit_length(bitarray)
     ones = BitArray.count_ones(bitarray)
 
     fraction_of_1 = ones / bits
     fraction_of_0 = 1 - fraction_of_1
 
-    elmements = -1 * :math.log(fraction_of_0) * bits / hashes
+    elmements = -1 * :math.log(fraction_of_0) * bits / number_of_hashes
 
     round(elmements)
   end
@@ -165,10 +165,10 @@ defmodule Flower.Bloom do
   Inserts an Erlang Term into the Bloom Filter.
   """
   @spec insert(bloomfilter(), any()) :: :ok
-  def insert({:bloom, bitarray, mask, hashes}, bin) when is_binary(bin) do
+  def insert({:bloom, bitarray, mask, number_of_hashes}, bin) when is_binary(bin) do
     sha256 = :crypto.hash(:sha256, bin)
 
-    hash_to_list(hashes, sha256)
+    hash_to_list(number_of_hashes, sha256)
     |> Enum.map(&Bitwise.&&&(&1, mask))
     |> write(bitarray)
   end
@@ -193,10 +193,10 @@ defmodule Flower.Bloom do
 
   """
   @spec has?(bloomfilter(), any()) :: boolean()
-  def has?({:bloom, bitarray, mask, hashes}, bin) when is_binary(bin) do
+  def has?({:bloom, bitarray, mask, number_of_hashes}, bin) when is_binary(bin) do
     sha256 = :crypto.hash(:sha256, bin)
 
-    hash_to_list(hashes, sha256)
+    hash_to_list(number_of_hashes, sha256)
     |> Enum.map(&Bitwise.&&&(&1, mask))
     |> read(bitarray)
   end
@@ -218,16 +218,16 @@ defmodule Flower.Bloom do
 
   @doc false
   @deprecated "This is unstable, can change soon"
-  def serialize({:bloom, bitarray, _mask, hashes}) do
+  def serialize({:bloom, bitarray, _mask, number_of_hashes}) do
     blen = BitArray.bit_length(bitarray)
     bitaddrlen = :math.log2(blen) |> trunc()
-    <<@ser_vsn, 42, bitaddrlen::8, hashes::8, BitArray.to_bin(bitarray)::binary>>
+    <<@ser_vsn, 42, bitaddrlen::8, number_of_hashes::8, BitArray.to_bin(bitarray)::binary>>
   end
 
   @doc false
   @deprecated "This is unstable, can change soon"
-  def deserialize(<<@ser_vsn, 42, bitaddrlen::8, hashes::8, bitarray::binary>>) do
-    {:bloom, BitArray.from_bin(bitarray), (1 <<< bitaddrlen) - 1, hashes}
+  def deserialize(<<@ser_vsn, 42, bitaddrlen::8, number_of_hashes::8, bitarray::binary>>) do
+    {:bloom, BitArray.from_bin(bitarray), (1 <<< bitaddrlen) - 1, number_of_hashes}
   end
 
   defp write([p | tail], bitarray) do
