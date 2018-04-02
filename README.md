@@ -187,12 +187,6 @@ Side note: If you want to check primes, ~~google~~
 search for *Miller–Rabin primality test*.
 
 ### Note
-Please try to avoid calling the following functions often:
-* `Bloom.false_positive_probability`
-* `Bloom.estimate_count`
 
-They are expensive for larger sizes,
-and therefore run on the Dirty CPU Scheduler.
-
-Also `Bloom.serialize(Bloom.new(:"512 MB", 100))` has huge memory cost, since it
+`Bloom.serialize(<...>)` has huge memory cost, since it
 has to copy the data.
