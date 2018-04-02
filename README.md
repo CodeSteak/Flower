@@ -82,10 +82,10 @@ iex> Bloom.has?(filter, 42) != Bloom.has_not?(filter, 42)
 true
 ```
 
-|Was actually inserted?| has? | has_not? |
-|:--------------------:|:----:|:--------:|
-| yes                  | yes  |   no     |
-| no                   | most of the times no  |   most of the times yes     |
+|Was actually inserted?|                  has?  |                    has_not?  |
+|:--------------------:|:----------------------:|:----------------------------:|
+| yes                  | yes                    |                       no     |
+| no                   | most of the times: no  |   most of the times: yes     |
 
 
 ##### Funky Stuff

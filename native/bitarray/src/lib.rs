@@ -2,6 +2,7 @@
 //#[macro_use] extern crate rustler_codegen;
 #[macro_use] extern crate lazy_static;
 
+use std::cmp;
 use std::sync::Mutex;
 
 use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
@@ -10,9 +11,11 @@ use rustler::types::{NifBinary, OwnedNifBinary};
 use rustler::schedule::NifScheduleFlags;
 
 
+
 mod atoms {
     rustler_atoms! {
         atom ok;
+        atom eof;
         //atom error;
         //atom __true__ = "true";
         //atom __false__ = "false";
@@ -27,7 +30,8 @@ rustler_export_nifs! {
     "Elixir.Flower.Native.BitArray",
     [("new", 1, new),
     ("from_bin", 1, from_bin, NifScheduleFlags::DirtyCpu),
-    ("to_bin", 1, to_bin, NifScheduleFlags::DirtyCpu),
+    //("to_bin", 1, to_bin, NifScheduleFlags::DirtyCpu),
+    ("to_bin_chuncked", 2, to_bin_chuncked),
     ("put", 3, put),
     ("get", 2, get),
     ("bit_length", 1, bit_length),
@@ -78,21 +82,40 @@ fn from_bin<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>>
     Ok(resource.encode(env))
 }
 
-fn to_bin<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
+const CHUNK_SIZE_U64 : usize = 64;
+
+fn to_bin_chuncked<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
+    let chunk_num: usize    = try!(args[1].decode());
+
     let data = resource.data.try_lock().unwrap();
 
-    let mut erl_bin : OwnedNifBinary = OwnedNifBinary::new(data.len() * 8).unwrap();
+
+
+    let offset    = chunk_num * CHUNK_SIZE_U64;
+    let reminding = (data.len() as i64) - (offset as i64);
+
+    let size      = cmp::min(CHUNK_SIZE_U64 as i64, reminding) as usize;
+
+    let is_eof    = reminding <= (CHUNK_SIZE_U64 as i64);
+
+    let erl_bin_byte_size = size * 8;
+
+    let mut erl_bin : OwnedNifBinary = OwnedNifBinary::new(erl_bin_byte_size).unwrap();
     let bin = erl_bin.as_mut_slice();
 
-    for x in 0usize..data.len() {
+    for x in 0..size {
         for y in 0..8 {
             let i = x*8 + y;
-            bin[i] = (data[x] >> (y*8)) as u8;
+            bin[i] = (data[x + offset] >> (y*8)) as u8;
         }
     }
 
-    Ok(erl_bin.release(env).encode(env))
+    if is_eof {
+        Ok((atoms::eof(),erl_bin.release(env)).encode(env))
+    }else {
+        Ok((chunk_num + 1,erl_bin.release(env)).encode(env))
+    }
 }
 
 fn put<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
