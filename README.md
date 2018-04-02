@@ -190,11 +190,9 @@ search for *Miller–Rabin primality test*.
 Please try to avoid calling the following functions often:
 * `Bloom.false_positive_probability`
 * `Bloom.estimate_count`
-* `Bloom.serialize`
-* `Bloom.deserialize`
 
 They are expensive for larger sizes,
 and therefore run on the Dirty CPU Scheduler.
 
-`Bloom.serialize(Bloom.new(:"512 MB", 100))` can hang for __45 seconds!__
-The data has to be copied since Elixir data types are immutable.
+Also `Bloom.serialize(Bloom.new(:"512 MB", 100))` has huge memory cost, since it
+has to copy the data.

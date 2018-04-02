@@ -29,9 +29,10 @@ struct BitArray {
 rustler_export_nifs! {
     "Elixir.Flower.Native.BitArray",
     [("new", 1, new),
-    ("from_bin", 1, from_bin, NifScheduleFlags::DirtyCpu),
+    //("from_bin", 1, from_bin, NifScheduleFlags::DirtyCpu),
     //("to_bin", 1, to_bin, NifScheduleFlags::DirtyCpu),
     ("to_bin_chuncked", 2, to_bin_chuncked),
+    ("or_chunk", 3, or_chunk),
     ("put", 3, put),
     ("get", 2, get),
     ("bit_length", 1, bit_length),
@@ -116,6 +117,25 @@ fn to_bin_chuncked<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTe
     }else {
         Ok((chunk_num + 1,erl_bin.release(env)).encode(env))
     }
+}
+
+fn or_chunk<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
+    let resource: ResourceArc<BitArray> = try!(args[0].decode());
+    let bin     : NifBinary             = try!(args[1].decode());
+    let byte_offset  : usize            = try!(args[2].decode());
+
+
+    let mut data = resource.data.try_lock().unwrap();
+
+
+    for x in 0..bin.len() {
+        let data_index   = (x + byte_offset) / 8;
+        let bin_offset = (x + byte_offset) % 8;
+
+        data[data_index] = data[data_index] | ((bin[x] as u64) << bin_offset*8);
+    }
+
+    Ok((byte_offset + bin.len()).encode(env))
 }
 
 fn put<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {

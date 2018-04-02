@@ -7,7 +7,7 @@ defmodule Flower.Native.BitArray do
   def put(_, _, _), do: :erlang.nif_error(:nif_not_loaded)
   def get(_, _), do: :erlang.nif_error(:nif_not_loaded)
   def to_bin_chuncked(_, _), do: :erlang.nif_error(:nif_not_loaded)
-  def from_bin(_), do: :erlang.nif_error(:nif_not_loaded)
+  def or_chunk(_, _, _), do: :erlang.nif_error(:nif_not_loaded)
   def bit_length(_), do: :erlang.nif_error(:nif_not_loaded)
   def count_ones(_), do: :erlang.nif_error(:nif_not_loaded)
 
@@ -15,7 +15,7 @@ defmodule Flower.Native.BitArray do
     to_bin(ref, {0, <<>>})
   end
 
-  def to_bin(ref, {:eof, data}) do
+  def to_bin(_ref, {:eof, data}) do
     data
   end
 
@@ -25,5 +25,17 @@ defmodule Flower.Native.BitArray do
         ref,
         to_bin_chuncked(ref, next_chunck)
       )
+  end
+
+  def from_bin(bin) do
+    ref =
+      bin
+      |> bit_size()
+      |> new()
+
+    ref
+    |> or_chunk(bin, 0)
+
+    ref
   end
 end
