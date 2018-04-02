@@ -194,5 +194,5 @@ Please try to avoid calling the following functions often:
 They are expensive for larger sizes,
 and therefore run on the Dirty CPU Scheduler.
 
-Also `Bloom.serialize(Bloom.new(:"512 MB", 100))` has huge memory cost, since it
+Also `Bloom.serialize(Bloom.new(:"512 MB", 100))` has huge memory costs, since it
 has to copy the data.
