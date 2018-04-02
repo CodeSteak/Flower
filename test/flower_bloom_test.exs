@@ -70,7 +70,7 @@ defmodule FlowerBloomTest do
   end
 
   test "estimate count" do
-    filter = Bloom.new(:"8 KB", 10_000)
+    filter = Bloom.new(:"8 KB", 1000)
 
     for x <- 1..1_000 do
       Bloom.insert(filter, x)

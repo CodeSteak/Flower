@@ -5,7 +5,7 @@ defmodule Flower.Bloom do
   @moduledoc """
   Flower.Bloom implements a Bloom Filter.
 
-  For this Bloom Filter sha256 is used as hash function.
+  For this Bloom Filter sha256 or sha512 is used as hash function.
   """
 
   @ser_vsn 1
@@ -89,7 +89,7 @@ defmodule Flower.Bloom do
   """
   @spec new(bitaddrlen :: 6..32, expected_elements :: pos_integer()) :: bloomfilter()
   def new(bitaddrlen, expected_elements) when bitaddrlen in 6..32 do
-    number_of_hashes = 1..8 |> Enum.min_by(&calc_fp_prob(expected_elements, 1 <<< bitaddrlen, &1))
+    number_of_hashes = 1..16 |> Enum.min_by(&calc_fp_prob(expected_elements, 1 <<< bitaddrlen, &1))
 
     if number_of_hashes == 1 do
       IO.warn("Your Bloom filter is too small for the expected number of elements!")
@@ -166,9 +166,8 @@ defmodule Flower.Bloom do
   """
   @spec insert(bloomfilter(), any()) :: :ok
   def insert({:bloom, bitarray, mask, number_of_hashes}, bin) when is_binary(bin) do
-    sha256 = :crypto.hash(:sha256, bin)
-
-    hash_to_list(number_of_hashes, sha256)
+    bin
+    |> bin_to_offset_list(number_of_hashes)
     |> Enum.map(&Bitwise.&&&(&1, mask))
     |> write(bitarray)
   end
@@ -194,9 +193,8 @@ defmodule Flower.Bloom do
   """
   @spec has?(bloomfilter(), any()) :: boolean()
   def has?({:bloom, bitarray, mask, number_of_hashes}, bin) when is_binary(bin) do
-    sha256 = :crypto.hash(:sha256, bin)
-
-    hash_to_list(number_of_hashes, sha256)
+    bin
+    |> bin_to_offset_list(number_of_hashes)
     |> Enum.map(&Bitwise.&&&(&1, mask))
     |> read(bitarray)
   end
@@ -247,38 +245,18 @@ defmodule Flower.Bloom do
     true
   end
 
-  # TODO fix formater
-  # defp hash_to_list(1, <<a::32,_b::32,_c::32,_d::32,_e::32,_f::32,_g::32,_h::32>>), do: [a]
-  # defp hash_to_list(2, <<a::32,b::32,_c::32,_d::32,_e::32,_f::32,_g::32,_h::32>>), do: [a,b]
-  # defp hash_to_list(3, <<a::32,b::32,c::32,_d::32,_e::32,_f::32,_g::32,_h::32>>), do: [a,b,c]
-  # defp hash_to_list(4, <<a::32,b::32,c::32,d::32,_e::32,_f::32,_g::32,_h::32>>), do: [a,b,c,d]
-  # defp hash_to_list(5, <<a::32,b::32,c::32,d::32,e::32,_f::32,_g::32,_h::32>>), do: [a,b,c,d,e]
-  # defp hash_to_list(6, <<a::32,b::32,c::32,d::32,e::32,f::32,_g::32,_h::32>>), do: [a,b,c,d,e,f]
-  # defp hash_to_list(7, <<a::32,b::32,c::32,d::32,e::32,f::32,g::32,_h::32>>), do: [a,b,c,d,e,f,g]
-  # defp hash_to_list(8, <<a::32,b::32,c::32,d::32,e::32,f::32,g::32,h::32>>), do: [a,b,c,d,e,f,g,h]
+  defp bin_to_offset_list(bin, number_of_hashes) when number_of_hashes <= 8 do
+      :crypto.hash(:sha256, bin)
+      |> hash_to_offset_list(number_of_hashes)
+  end
 
-  defp hash_to_list(1, <<a::32, _b::32, _c::32, _d::32, _e::32, _f::32, _g::32, _h::32>>), do: [a]
+  defp bin_to_offset_list(bin ,number_of_hashes) when number_of_hashes > 8 do
+      :crypto.hash(:sha512, bin)
+      |> hash_to_offset_list(number_of_hashes)
+  end
 
-  defp hash_to_list(2, <<a::32, b::32, _c::32, _d::32, _e::32, _f::32, _g::32, _h::32>>),
-    do: [a, b]
-
-  defp hash_to_list(3, <<a::32, b::32, c::32, _d::32, _e::32, _f::32, _g::32, _h::32>>),
-    do: [a, b, c]
-
-  defp hash_to_list(4, <<a::32, b::32, c::32, d::32, _e::32, _f::32, _g::32, _h::32>>),
-    do: [a, b, c, d]
-
-  defp hash_to_list(5, <<a::32, b::32, c::32, d::32, e::32, _f::32, _g::32, _h::32>>),
-    do: [a, b, c, d, e]
-
-  defp hash_to_list(6, <<a::32, b::32, c::32, d::32, e::32, f::32, _g::32, _h::32>>),
-    do: [a, b, c, d, e, f]
-
-  defp hash_to_list(7, <<a::32, b::32, c::32, d::32, e::32, f::32, g::32, _h::32>>),
-    do: [a, b, c, d, e, f, g]
-
-  defp hash_to_list(8, <<a::32, b::32, c::32, d::32, e::32, f::32, g::32, h::32>>),
-    do: [a, b, c, d, e, f, g, h]
+  defp hash_to_offset_list(_, 0), do: []
+  defp hash_to_offset_list(<<num::32, rest::binary>>, n), do: [num|hash_to_offset_list(rest, n-1)]
 
   @doc false
   @deprecated "Use `has?` instead"
