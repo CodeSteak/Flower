@@ -7,11 +7,11 @@
   when saving to disk.
 
 ### WIP
-* refactor dirty NIFs to be "clean"
 
 ### Done
-* increase internal max hashes of Bloom Filter from 8 to 16,
-  intrudes `sha512`.
+* refactor dirty NIFs to be "clean"
+* increase internal max hashes of Bloom Filters from 8 to 16,
+  introduce `sha512`.
 * include CHANGELOG
 
 ## v0.1.3

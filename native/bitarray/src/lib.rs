@@ -8,8 +8,6 @@ use std::sync::Mutex;
 use rustler::{NifEnv, NifTerm, NifResult, NifEncoder};
 use rustler::resource::ResourceArc;
 use rustler::types::{NifBinary, OwnedNifBinary};
-use rustler::schedule::NifScheduleFlags;
-
 
 
 mod atoms {
@@ -29,14 +27,13 @@ struct BitArray {
 rustler_export_nifs! {
     "Elixir.Flower.Native.BitArray",
     [("new", 1, new),
-    //("from_bin", 1, from_bin, NifScheduleFlags::DirtyCpu),
-    //("to_bin", 1, to_bin, NifScheduleFlags::DirtyCpu),
-    ("to_bin_chuncked", 2, to_bin_chuncked),
-    ("or_chunk", 3, or_chunk),
-    ("put", 3, put),
-    ("get", 2, get),
-    ("bit_length", 1, bit_length),
-    ("count_ones", 1, count_ones, NifScheduleFlags::DirtyCpu)],
+     ("to_bin_chunked", 2, to_bin_chunked),
+     ("or_chunk", 3, or_chunk),
+     ("put", 3, put),
+     ("get", 2, get),
+     ("bit_length", 1, bit_length),
+     ("count_ones_chunked", 2, count_ones_chunked)
+    ],
     Some(on_load)
 }
 
@@ -58,34 +55,9 @@ fn new<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     Ok(resource.encode(env))
 }
 
-fn from_bin<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
-    let bin: NifBinary = try!(args[0].decode());
-    let bin64len = (bin.len()-1) / 8 + 1;
-
-    let mut data: Box<[u64]> = vec![0; bin64len].into_boxed_slice();
-
-    for x in 0..data.len() {
-        data[x] = 0
-            | ((bin[x*8 + 0] as u64) << 0*8)
-            | ((bin[x*8 + 1] as u64) << 1*8)
-            | ((bin[x*8 + 2] as u64) << 2*8)
-            | ((bin[x*8 + 3] as u64) << 3*8)
-            | ((bin[x*8 + 4] as u64) << 4*8)
-            | ((bin[x*8 + 5] as u64) << 5*8)
-            | ((bin[x*8 + 6] as u64) << 6*8)
-            | ((bin[x*8 + 7] as u64) << 7*8);
-    }
-
-    let resource : ResourceArc<BitArray> = ResourceArc::new( BitArray{
-        data: Mutex::new(data)
-    });
-
-    Ok(resource.encode(env))
-}
-
 const CHUNK_SIZE_U64 : usize = 64;
 
-fn to_bin_chuncked<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
+fn to_bin_chunked<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
     let chunk_num: usize    = try!(args[1].decode());
 
@@ -118,6 +90,7 @@ fn to_bin_chuncked<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTe
         Ok((chunk_num + 1,erl_bin.release(env)).encode(env))
     }
 }
+
 
 fn or_chunk<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
@@ -176,14 +149,26 @@ fn bit_length<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a
     Ok((data.len() * 64).encode(env))
 }
 
-fn count_ones<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
+fn count_ones_chunked<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
+    let chunk_num: usize    = try!(args[1].decode());
+
     let data = resource.data.try_lock().unwrap();
 
+    let offset    = chunk_num * CHUNK_SIZE_U64;
+    let reminding = (data.len() as i64) - (offset as i64);
+    let size      = cmp::min(CHUNK_SIZE_U64 as i64, reminding) as usize;
+    let is_eof    = reminding <= (CHUNK_SIZE_U64 as i64);
+
     let mut count = 0usize;
-    for x in data.iter() {
-        count += x.count_ones() as usize;
+
+    for x in 0..size {
+        count += data[x + offset].count_ones() as usize;
     }
 
-    Ok(count.encode(env))
+    if is_eof {
+        Ok((atoms::eof(), count).encode(env))
+    }else {
+        Ok((chunk_num + 1, count).encode(env))
+    }
 }
