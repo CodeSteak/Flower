@@ -188,5 +188,12 @@ search for *Miller–Rabin primality test*.
 
 ### Note
 
+<<<<<<< HEAD
 `Bloom.serialize(<...>)` has huge memory cost, since it
+=======
+They are expensive for larger sizes,
+and therefore run on the Dirty CPU Scheduler.
+
+Also `Bloom.serialize(Bloom.new(:"512 MB", 100))` has huge memory costs, since it
+>>>>>>> 3507f315b94efeb0936274b7529a653acc5f45fb
 has to copy the data.
