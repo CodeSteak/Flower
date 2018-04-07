@@ -50,4 +50,8 @@ defmodule Flower.Native.BitArray do
 
     ref
   end
+
+  def stream(ref) do
+    %Flower.Native.BitArray.Stream{bitarray_ref: ref, pos: 0}
+  end
 end
