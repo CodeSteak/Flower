@@ -89,7 +89,8 @@ defmodule Flower.Bloom do
   """
   @spec new(bitaddrlen :: 6..32, expected_elements :: pos_integer()) :: bloomfilter()
   def new(bitaddrlen, expected_elements) when bitaddrlen in 6..32 do
-    number_of_hashes = 1..16 |> Enum.min_by(&calc_fp_prob(expected_elements, 1 <<< bitaddrlen, &1))
+    number_of_hashes =
+      1..16 |> Enum.min_by(&calc_fp_prob(expected_elements, 1 <<< bitaddrlen, &1))
 
     if number_of_hashes == 1 do
       IO.warn("Your Bloom filter is too small for the expected number of elements!")
@@ -222,10 +223,66 @@ defmodule Flower.Bloom do
     <<@ser_vsn, 42, bitaddrlen::8, number_of_hashes::8, BitArray.to_bin(bitarray)::binary>>
   end
 
+  @doc """
+  Creates a `Stream` of binaries. This should be used for serializing.
+
+  Example:
+  ```
+  filter = Bloom.new(...)
+  file   = File.stream!("myfile.bloomfilter", [:delayed_write, :binary], 8096)
+
+  Bloom.stream(filter)
+  |> Stream.into(file)
+  |> Stream.run
+  ```
+  """
+  @spec stream(bloomfilter()) :: Enumerable.t()
+  def stream({:bloom, bitarray, _mask, number_of_hashes}) do
+    blen = BitArray.bit_length(bitarray)
+    bitaddrlen = :math.log2(blen) |> trunc()
+
+    [<<@ser_vsn, 42, bitaddrlen::8, number_of_hashes::8>>]
+    |> Stream.concat(BitArray.stream(bitarray))
+  end
+
   @doc false
   @deprecated "This is unstable, can change soon"
   def deserialize(<<@ser_vsn, 42, bitaddrlen::8, number_of_hashes::8, bitarray::binary>>) do
     {:bloom, BitArray.from_bin(bitarray), (1 <<< bitaddrlen) - 1, number_of_hashes}
+  end
+
+  @doc """
+  Creates a Bloom Filter from a `Stream` of binaries. This should be used for deserializing.
+
+  Example:
+  ```
+  file   = File.stream!("myfile.bloomfilter", [:read_ahead, :binary], 8096)
+  Bloom.from_stream(file)
+  ```
+  """
+  @spec from_stream(Enumerable.t()) :: {:ok, bloomfilter()} | {:error, any()}
+  def from_stream(stream), do: from_stream(stream, <<>>)
+
+  defp from_stream(stream, <<@ser_vsn, 42, bitaddrlen::8, number_of_hashes::8, tail::binary>>) do
+    ref = BitArray.new(1 <<< bitaddrlen)
+
+    [tail]
+    |> Stream.concat(stream)
+    |> Stream.into(BitArray.stream(ref))
+    |> Stream.run()
+
+    {:ok, {:bloom, ref, (1 <<< bitaddrlen) - 1, number_of_hashes}}
+  end
+
+  defp from_stream(stream, acc) when byte_size(acc) < 100 do
+    [head] = stream |> Enum.take(1)
+    next_acc = acc <> head
+    next_stream = stream |> Stream.drop(1)
+    from_stream(next_stream, next_acc)
+  end
+
+  defp from_stream(_,_) do
+      {:error, :invalid_header}
   end
 
   defp write([p | tail], bitarray) do
@@ -246,17 +303,19 @@ defmodule Flower.Bloom do
   end
 
   defp bin_to_offset_list(bin, number_of_hashes) when number_of_hashes <= 8 do
-      :crypto.hash(:sha256, bin)
-      |> hash_to_offset_list(number_of_hashes)
+    :crypto.hash(:sha256, bin)
+    |> hash_to_offset_list(number_of_hashes)
   end
 
-  defp bin_to_offset_list(bin ,number_of_hashes) when number_of_hashes > 8 do
-      :crypto.hash(:sha512, bin)
-      |> hash_to_offset_list(number_of_hashes)
+  defp bin_to_offset_list(bin, number_of_hashes) when number_of_hashes > 8 do
+    :crypto.hash(:sha512, bin)
+    |> hash_to_offset_list(number_of_hashes)
   end
 
   defp hash_to_offset_list(_, 0), do: []
-  defp hash_to_offset_list(<<num::32, rest::binary>>, n), do: [num|hash_to_offset_list(rest, n-1)]
+
+  defp hash_to_offset_list(<<num::32, rest::binary>>, n),
+    do: [num | hash_to_offset_list(rest, n - 1)]
 
   @doc false
   @deprecated "Use `has?` instead"

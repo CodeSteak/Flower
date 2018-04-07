@@ -55,7 +55,7 @@ defmodule BitArrayTest do
   end
 
   test "1000 Random Writes And Reads With Stream To File Serialisation" do
-      File.rm("test/test.file")
+    File.rm("test/test.file1")
 
     a = BitArray.new(10000)
 
@@ -68,14 +68,12 @@ defmodule BitArrayTest do
     bs = BitArray.new(10000)
 
     BitArray.stream(a)
-    |> Stream.into(File.stream!("test/test.file"))
+    |> Stream.into(File.stream!("test/test.file1"))
     |> Stream.run()
 
-
-    File.stream!("test/test.file")
+    File.stream!("test/test.file1")
     |> Stream.into(BitArray.stream(bs))
     |> Stream.run()
-
 
     for x <- 0..999 do
       assert BitArray.get(bs, x) == x in trues

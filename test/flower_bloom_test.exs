@@ -79,4 +79,91 @@ defmodule FlowerBloomTest do
     # 1% should be okay
     assert Bloom.estimate_count(filter) - 1_000 < 10
   end
+
+  test "stream into file and back" do
+    File.rm("test/test.file3")
+
+    filter = Bloom.new(:"128 KB", 1000)
+
+    for x <- 1..1_000 do
+      Bloom.insert(filter, "#{x}")
+    end
+
+    Bloom.stream(filter)
+    |> Stream.into(File.stream!("test/test.file3", [], 1024))
+    |> Stream.run()
+
+    {:ok, filter2} = Bloom.from_stream(File.stream!("test/test.file3", [], 1024))
+
+    assert Bloom.serialize(filter) == Bloom.serialize(filter2)
+  end
+
+  # This test takes too long then not run in production mode.
+  if Mix.env() == :prod do
+    test "stream into file and back 512MB" do
+      File.rm("test/test.file2")
+
+      filter = Bloom.new(:"512 MB", 1000)
+
+      for x <- 1..1_000 do
+        Bloom.insert(filter, "#{x}")
+      end
+
+      me = self()
+
+      spawn_link(fn ->
+        send(me, Bloom.stream(filter) |> hash_stream)
+      end)
+
+      Bloom.stream(filter)
+      |> Stream.into(
+        File.stream!(
+          "test/test.file2",
+          [:delayed_write, :read_ahead, :binary, :compressed],
+          64 * 1024
+        )
+      )
+      |> Stream.run()
+
+      # Note: :compressed is only used because the Bloom filter is near empty
+      {:ok, filter2} =
+        Bloom.from_stream(
+          File.stream!(
+            "test/test.file2",
+            [:delayed_write, :read_ahead, :binary, :compressed],
+            64 * 1024
+          )
+        )
+
+      spawn_link(fn ->
+        send(me, Bloom.stream(filter2) |> hash_stream)
+      end)
+
+      hash_one =
+        receive do
+          a -> a
+        after
+          60_000 ->
+            throw("failed")
+        end
+
+      hash_two =
+        receive do
+          a -> a
+        after
+          60_000 ->
+            throw("failed")
+        end
+
+      assert hash_one == hash_two
+    end
+
+    defp hash_stream(stream) do
+      stream
+      |> Enum.reduce(:crypto.hash_init(:md5), fn bin, acc ->
+        :crypto.hash_update(acc, bin)
+      end)
+      |> :crypto.hash_final()
+    end
+  end
 end
