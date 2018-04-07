@@ -88,6 +88,24 @@ true
 | no                   | most of the times: no  |   most of the times: yes     |
 
 
+##### Write To Disk
+
+```elixir
+filename = "prime_filter.bloom"
+file = File.stream!(filename, [:delayed_write, :binary], 8096)
+
+(Bloom.stream(filter) |> Stream.into(file) |> Stream.run)
+```
+
+##### Read From Disk
+
+```elixir
+filename = "prime_filter.bloom"
+file = File.stream!(filename, [:read_ahead, :binary], 8096)
+
+{:ok, new_filter} = Bloom.from_stream(file)
+```
+
 ##### Funky Stuff
 ```elixir
 iex> Bloom.estimate_count(filter)
@@ -123,9 +141,6 @@ non_primes = Bloom.new(:"64 KB", 100_000)
 non_primes = Bloom.new(19, 100_000)
 # or (it will choose the next smaller size)
 non_primes = Bloom.new_by_byte_size(64 * 1024, 100_000)
-
-# Let's inspect the size.
-byte_size(Bloom.serialize(non_primes))
 
 # Let's put some non primes in:
 Bloom.insert(non_primes, 42)
@@ -174,6 +189,21 @@ non_primes |> Bloom.has_not?(3549) # prime
 non_primes |> Bloom.has_not?(89591) # prime
 non_primes |> Bloom.has_not?(84949) # no prime
 
+# Let's write it to disk:
+filename = "prime_filter.bloom"
+file = File.stream!(filename, [:delayed_write, :read_ahead, :binary], 8096)
+(Bloom.stream(non_primes)
+|> Stream.into(file)
+|> Stream.run)
+# Let's inspect the size of the filter:
+File.lstat!(filename).size
+
+# We can also read from disk:
+{:ok, new_non_primes} = Bloom.from_stream(file)
+new_non_primes |> Bloom.has_not?(12) # not a prime
+new_non_primes |> Bloom.has_not?(11) # prime
+# Works!
+
 # Maybe a bit high, 64 KB for 100_000 Numbers
 # is not that much.
 Bloom.false_positive_probability(non_primes)
@@ -185,8 +215,3 @@ Bloom.estimate_count(non_primes)
 ```
 Side note: If you want to check primes, ~~google~~
 search for *Miller–Rabin primality test*.
-
-### Note
-
-`Bloom.serialize(<...>)` has huge memory cost, since it
-has to copy the data.

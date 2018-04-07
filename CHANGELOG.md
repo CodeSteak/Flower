@@ -2,8 +2,10 @@
 
 ## v0.1.4
 
-* implement `Flower.Bloom.(de)serialize` as `Enumerable` to reduce memory usage
+* replace `Flower.Bloom.(de)serialize` with a `Enumerable` to reduce memory usage
   when saving to disk.
+  * add `Flower.Bloom.stream(bloomfilter)`
+  * add `Flower.Bloom.from_stream(stream)`
 * refactor dirty NIFs to be "clean"
 * increase internal max hashes of Bloom Filters from 8 to 16,
   introduce `sha512`.
