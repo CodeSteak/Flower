@@ -55,15 +55,13 @@ fn new<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     Ok(resource.encode(env))
 }
 
-const CHUNK_SIZE_U64 : usize = 64;
+const CHUNK_SIZE_U64 : usize = 1024;
 
 fn to_bin_chunked<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
     let chunk_num: usize    = try!(args[1].decode());
 
-    let data = resource.data.try_lock().unwrap();
-
-
+    let data = resource.data.lock().unwrap();
 
     let offset    = chunk_num * CHUNK_SIZE_U64;
     let reminding = (data.len() as i64) - (offset as i64);
@@ -98,7 +96,7 @@ fn or_chunk<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>>
     let byte_offset  : usize            = try!(args[2].decode());
 
 
-    let mut data = resource.data.try_lock().unwrap();
+    let mut data = resource.data.lock().unwrap();
 
 
     for x in 0..bin.len() {
@@ -116,7 +114,7 @@ fn put<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let index: usize = try!(args[1].decode());
     let value: bool = try!(args[2].decode());
 
-    let mut vec = resource.data.try_lock().unwrap();
+    let mut vec = resource.data.lock().unwrap();
 
     let mut word = vec[index / 64];
 
@@ -135,7 +133,7 @@ fn get<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
     let index: usize = try!(args[1].decode());
 
-    let data = resource.data.try_lock().unwrap();
+    let data = resource.data.lock().unwrap();
 
     let result = (data[index / 64] & (1 << (index % 64))) != 0;
 
@@ -144,7 +142,7 @@ fn get<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
 
 fn bit_length<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<NifTerm<'a>> {
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
-    let data = resource.data.try_lock().unwrap();
+    let data = resource.data.lock().unwrap();
 
     Ok((data.len() * 64).encode(env))
 }
@@ -153,7 +151,7 @@ fn count_ones_chunked<'a>(env: NifEnv<'a>, args: &[NifTerm<'a>]) -> NifResult<Ni
     let resource: ResourceArc<BitArray> = try!(args[0].decode());
     let chunk_num: usize    = try!(args[1].decode());
 
-    let data = resource.data.try_lock().unwrap();
+    let data = resource.data.lock().unwrap();
 
     let offset    = chunk_num * CHUNK_SIZE_U64;
     let reminding = (data.len() as i64) - (offset as i64);
