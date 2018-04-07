@@ -99,20 +99,20 @@ defmodule FlowerBloomTest do
   end
 
   test "copy with stream" do
-      filter = Bloom.new(:"512 KB", 1000)
+    filter = Bloom.new(:"512 KB", 1000)
 
-      Bloom.insert(filter, true)
+    Bloom.insert(filter, true)
 
-      assert Bloom.has?(filter, true) == true
-      assert Bloom.has?(filter, false) == false
+    assert Bloom.has?(filter, true) == true
+    assert Bloom.has?(filter, false) == false
 
-      {:ok, new_filter} = filter
+    {:ok, new_filter} =
+      filter
       |> Bloom.stream()
       |> Bloom.from_stream()
 
-      assert Bloom.has?(new_filter, true) == true
-      assert Bloom.has?(new_filter, false) == false
-
+    assert Bloom.has?(new_filter, true) == true
+    assert Bloom.has?(new_filter, false) == false
   end
 
   # This test takes too long then not run in production mode.

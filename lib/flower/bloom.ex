@@ -281,8 +281,8 @@ defmodule Flower.Bloom do
     from_stream(next_stream, next_acc)
   end
 
-  defp from_stream(_,_) do
-      {:error, :invalid_header}
+  defp from_stream(_, _) do
+    {:error, :invalid_header}
   end
 
   defp write([p | tail], bitarray) do
