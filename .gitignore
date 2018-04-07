@@ -22,6 +22,9 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 flower-*.tar
 
+# tests
+/test/test.file*
+
 # Rust Stuff
 /native/bitarray/Cargo.lock
 /native/bitarray/target/

@@ -2,8 +2,13 @@ language: elixir
 
 elixir:
     - 1.6
-    
+otp_release: '20.3'
+
 sudo: true
 
 before_install:
     - curl https://static.rust-lang.org/rustup.sh | sh
+
+script:
+    - mix test
+    - MIX_ENV=prod mix test
