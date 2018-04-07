@@ -34,6 +34,54 @@ defmodule BitArrayTest do
     end
   end
 
+  test "1000 Random Writes And Reads With Stream Serialisation" do
+    a = BitArray.new(1000)
+
+    trues = 0..999 |> Enum.to_list() |> Enum.filter(fn _ -> :rand.uniform(2) == 1 end)
+
+    for x <- 0..999 do
+      BitArray.put(a, x, x in trues)
+    end
+
+    bs = BitArray.new(1000)
+
+    BitArray.stream(a)
+    |> Stream.into(BitArray.stream(bs))
+    |> Stream.run()
+
+    for x <- 0..999 do
+      assert BitArray.get(bs, x) == x in trues
+    end
+  end
+
+  test "1000 Random Writes And Reads With Stream To File Serialisation" do
+      File.rm("test/test.file")
+
+    a = BitArray.new(10000)
+
+    trues = 0..999 |> Enum.to_list() |> Enum.filter(fn _ -> :rand.uniform(2) == 1 end)
+
+    for x <- 0..999 do
+      BitArray.put(a, x, x in trues)
+    end
+
+    bs = BitArray.new(10000)
+
+    BitArray.stream(a)
+    |> Stream.into(File.stream!("test/test.file"))
+    |> Stream.run()
+
+
+    File.stream!("test/test.file")
+    |> Stream.into(BitArray.stream(bs))
+    |> Stream.run()
+
+
+    for x <- 0..999 do
+      assert BitArray.get(bs, x) == x in trues
+    end
+  end
+
   test "10_000 Random Writes True then False And Reads" do
     a = BitArray.new(10000)
 
